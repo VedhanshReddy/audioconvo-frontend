@@ -1,88 +1,113 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>8D Audio Converter 🎧</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="static/style.css">
-</head>
-<body>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>8D Audio Converter 🎧</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
 
-    <div class="container">
-        <div class="header">
-            <h1>🎵 8D Audio Converter</h1>
-            <button id="toggle-mode" onclick="toggleMode()">🌙</button>
-        </div>
-        <p class="subtext">Upload your song and experience 8D Sound!</p>
-
-        <div class="upload-box">
-            <input type="file" id="file-input">
-            <button class="btn" onclick="uploadFile()">Convert to 8D</button>
-        </div>
-
-        <div id="progress-container">
-            <p id="progress-text">Processing...</p>
-            <div class="progress-bar-wrapper">
-                <div id="progress-bar"></div>
+        <div class="container">
+            <div class="header">
+                <h1>🎵 8D Audio Converter</h1>
+                <button id="toggle-mode" onclick="toggleMode()">🌙</button>
             </div>
-        </div>
+            <p class="subtext">Upload your song and experience 8D Sound!</p>
+            <p class="subtext">You can download songs from here : <a href="https://www.naasongs.co/" target="_blank">Telugu Songs</a> , <a href="https://pagalfree.com/" target="_blank">Hindi Songs</a></p>
 
-        <button id="download-btn" class="btn" style="display: none;" onclick="openModal()">Download 8D Audio 🎧</button>
-
-        <!-- Modal -->
-        <div id="download-modal" class="modal">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <p>Your file is ready!</p>
-                <a id="modal-download-link" href="#" download class="btn">Download 🎧</a>
+            <div class="upload-box">
+                <input type="file" id="file-input">
+                <button class="btn" onclick="uploadFile()">Convert to 8D</button>
             </div>
+
+            <div id="progress-container">
+                <p id="progress-text">Processing...</p>
+                <div class="progress-bar-wrapper">
+                    <div id="progress-bar"></div>
+                </div>
+            </div>
+
+                    <!-- Download Modal -->
+            <!-- Modal Structure -->
+            <div id="downloadModal" class="modal">
+                <div class="modal-content">
+                    <h2>Conversion Complete! 🎉</h2>
+                    <p>Your 8D audio file is ready to download.</p>
+                    <a id="download-btn" href="#" download class="btn">Download 8D Audio 🎧</a>
+                </div>
+            </div>
+
+
         </div>
-    </div>
 
-    <script>
-        const backendURL = "https://your-backend-url.com"; // Change to your backend URL
+        <script>
+            function uploadFile() {
+                let file = document.getElementById("file-input").files[0];
+                if (!file) {
+                    alert("Please select a file!");
+                    return;
+                }
 
-        function uploadFile() {
-            let file = document.getElementById("file-input").files[0];
-            if (!file) {
-                alert("Please select a file!");
-                return;
+                let formData = new FormData();
+                formData.append("file", file);
+
+                $(".upload-box").hide();
+                $("#progress-container").show();
+                $("#download-btn").hide();
+
+                $.ajax({
+                    url: "/upload",
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        trackProgress(response.file_id, response.output_filename);
+                    }
+                });
             }
 
-            let formData = new FormData();
-            formData.append("file", file);
+        function trackProgress(fileId, downloadFilename) {
+            let interval = setInterval(() => {
+                $.get(`/progress/${fileId}`, function(response) {
+                    let progressValue = response.progress;
+                    $("#progress-bar").css("width", progressValue + "%");
+                    $("#progress-text").text("Processing... " + progressValue + "%");
 
-            $(".upload-box").hide();
-            $("#progress-container").show();
-            $("#download-btn").hide();
+                    if (progressValue >= 10) {
+                        $("#progress-text").text("We are getting your file ready, wait a few secs...");
+                    }
 
-            $.ajax({
-                url: backendURL + "/convert",
-                type: "POST",
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function(response) {
-                    $("#progress-text").text("Conversion Complete! 🎉");
-                    $("#download-btn").fadeIn();
-                    $("#modal-download-link").attr("href", backendURL + response.file);
-                }
+                    if (progressValue >= 100) {
+                        clearInterval(interval);
+                        $("#progress-text").text("Conversion Complete! 🎉");
+
+                        // Show modal properly
+                        $("#downloadModal").fadeIn();
+                        $("#download-btn").attr("href", "/download/" + downloadFilename);
+
+                        // Ensure button is visible
+                        $("#download-btn").css("display", "block");
+                    }
+                });
+            }, 1000);
+        }
+
+            function toggleMode() {
+                let body = document.body;
+                body.classList.toggle("light-mode");
+
+                let toggleBtn = document.getElementById("toggle-mode");
+                toggleBtn.innerText = body.classList.contains("light-mode") ? "🌙" : "☀️";
+            }
+
+            // Close modal
+            $("#closeModal").click(function () {
+                $("#downloadModal").fadeOut();
             });
-        }
+        </script>
 
-        function openModal() {
-            document.getElementById("download-modal").style.display = "block";
-        }
-
-        function closeModal() {
-            document.getElementById("download-modal").style.display = "none";
-        }
-
-        function toggleMode() {
-            document.body.classList.toggle("light-mode");
-        }
-    </script>
-
-</body>
-</html>
+    </body>
+    </html>
