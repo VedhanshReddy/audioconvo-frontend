@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8D Audio Converter 🎧</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎵 8D Audio Converter</h1>
+            <button id="toggle-mode" onclick="toggleMode()">🌙</button>
+        </div>
+        <p class="subtext">Upload your song and experience 8D Sound!</p>
+
+        <div class="upload-box">
+            <input type="file" id="file-input">
+            <button class="btn" onclick="uploadFile()">Convert to 8D</button>
+        </div>
+
+        <div id="progress-container">
+            <p id="progress-text">Processing...</p>
+            <div class="progress-bar-wrapper">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+
+        <button id="download-btn" class="btn" style="display: none;" onclick="openModal()">Download 8D Audio 🎧</button>
+
+        <!-- Modal -->
+        <div id="download-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <p>Your file is ready!</p>
+                <a id="modal-download-link" href="#" download class="btn">Download 🎧</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const backendURL = "https://your-backend-url.com"; // Change to your backend URL
+
+        function uploadFile() {
+            let file = document.getElementById("file-input").files[0];
+            if (!file) {
+                alert("Please select a file!");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", file);
+
+            $(".upload-box").hide();
+            $("#progress-container").show();
+            $("#download-btn").hide();
+
+            $.ajax({
+                url: backendURL + "/convert",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function(response) {
+                    $("#progress-text").text("Conversion Complete! 🎉");
+                    $("#download-btn").fadeIn();
+                    $("#modal-download-link").attr("href", backendURL + response.file);
+                }
+            });
+        }
+
+        function openModal() {
+            document.getElementById("download-modal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("download-modal").style.display = "none";
+        }
+
+        function toggleMode() {
+            document.body.classList.toggle("light-mode");
+        }
+    </script>
+
+</body>
+</html>
